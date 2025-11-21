@@ -6,7 +6,7 @@ import { Chat } from '../types';
 
 const ChatList: React.FC = () => {
     const { user } = useAuth();
-    const { chats, selectedChat, setSelectedChat, notifications } = useChat();
+    const { chats, selectedChat, setSelectedChat, clearUnreadCount } = useChat();
     const { onlineUsers } = useSocket();
 
     const getSender = (chat: Chat) => {
@@ -31,7 +31,7 @@ const ChatList: React.FC = () => {
     };
 
     const getUnreadCount = (chat: Chat) => {
-        return notifications.filter((n) => n.chat._id === chat._id).length;
+        return chat.unreadCount || 0;
     };
 
     const formatTime = (date: string) => {
@@ -45,15 +45,23 @@ const ChatList: React.FC = () => {
         return messageDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
+    const handleChatClick = (chat: Chat) => {
+        setSelectedChat(chat);
+        // Clear unread count when opening chat
+        if (chat.unreadCount && chat.unreadCount > 0) {
+            clearUnreadCount(chat._id);
+        }
+    };
+
     return (
         <div className="flex-1 overflow-y-auto custom-scrollbar">
             {chats.length === 0 ? (
-                <div className="p-4 text-center text-gray-400">
+                <div className="p-4 text-center text-slate-400">
                     <p>No chats yet</p>
                     <p className="text-sm mt-2">Search for users to start chatting</p>
                 </div>
             ) : (
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-slate-700/30">
                     {chats.map((chat) => {
                         const unreadCount = getUnreadCount(chat);
                         const isOnline = isUserOnline(chat);
@@ -62,22 +70,22 @@ const ChatList: React.FC = () => {
                         return (
                             <div
                                 key={chat._id}
-                                onClick={() => setSelectedChat(chat)}
-                                className={`p-4 cursor-pointer transition-all duration-200 hover:bg-white/5 ${isSelected ? 'bg-white/10' : ''
+                                onClick={() => handleChatClick(chat)}
+                                className={`p-4 cursor-pointer transition-all duration-200 hover:bg-white/5 ${isSelected ? 'bg-white/10 border-l-4 border-blue-500' : ''
                                     }`}
                             >
                                 <div className="flex items-center space-x-3">
                                     {/* Avatar */}
                                     <div className="relative">
                                         {chat.isGroupChat ? (
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-2xl">
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30">
                                                 {getSenderAvatar(chat)}
                                             </div>
                                         ) : (
                                             <img
                                                 src={getSenderAvatar(chat)}
                                                 alt={getSender(chat)}
-                                                className="w-12 h-12 rounded-full"
+                                                className="w-12 h-12 rounded-full border-2 border-slate-700/50"
                                             />
                                         )}
                                         {isOnline && (
@@ -90,22 +98,24 @@ const ChatList: React.FC = () => {
                                         <div className="flex items-center justify-between">
                                             <h4 className="font-semibold truncate">{getSender(chat)}</h4>
                                             {chat.latestMessage && (
-                                                <span className="text-xs text-gray-400">
+                                                <span className="text-xs text-slate-400">
                                                     {formatTime(chat.latestMessage.createdAt)}
                                                 </span>
                                             )}
                                         </div>
                                         {chat.latestMessage && (
-                                            <p className="text-sm text-gray-400 truncate">
+                                            <p className="text-sm text-slate-400 truncate">
                                                 {chat.latestMessage.sender._id === user?._id && 'You: '}
-                                                {chat.latestMessage.content}
+                                                {chat.latestMessage.imageUrl ? '📷 Photo' : chat.latestMessage.content}
                                             </p>
                                         )}
                                     </div>
 
                                     {/* Unread Badge */}
                                     {unreadCount > 0 && (
-                                        <div className="badge">{unreadCount}</div>
+                                        <div className="bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
+                                            {unreadCount}
+                                        </div>
                                     )}
                                 </div>
                             </div>

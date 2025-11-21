@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 interface AuthContextType {
     user: User | null;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
     token: string | null;
     login: (email: string, password: string) => Promise<void>;
     register: (name: string, email: string, password: string, avatar?: string) => Promise<void>;
@@ -90,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser, token, login, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

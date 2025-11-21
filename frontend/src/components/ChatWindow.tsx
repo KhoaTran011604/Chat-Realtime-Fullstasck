@@ -190,7 +190,7 @@ const ChatWindow: React.FC = () => {
     return (
         <div className="flex-1 flex flex-col h-full">
             {/* Chat Header */}
-            <div className="glass-dark border-b border-white/10 p-4 shadow-lg">
+            <div className="glass-dark border-b border-slate-700/30 p-4 shadow-lg">
                 <div className="flex items-center justify-center md:justify-start relative">
                     {/* Back button for mobile */}
                     <button
@@ -202,13 +202,13 @@ const ChatWindow: React.FC = () => {
 
                     {/* Avatar and Name */}
                     <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-xl font-bold shadow-lg">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-500/30">
                             {selectedChat.isGroupChat ? '👥' : getSender().charAt(0).toUpperCase()}
                         </div>
                         <div className="text-center md:text-left">
                             <h3 className="font-bold text-lg">{getSender()}</h3>
                             {selectedChat.isGroupChat && (
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-slate-400">
                                     {selectedChat.users.length} members
                                 </p>
                             )}
@@ -218,20 +218,20 @@ const ChatWindow: React.FC = () => {
             </div>
 
             {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 bg-gradient-to-b from-slate-900/30 to-slate-900/60">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 bg-gradient-to-b from-slate-900/20 to-slate-900/40">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
                         <div className="text-center">
-                            <div className="animate-spin h-12 w-12 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                            <p className="text-gray-400 text-sm">Loading messages...</p>
+                            <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                            <p className="text-slate-400 text-sm">Loading messages...</p>
                         </div>
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <div className="text-center">
                             <div className="text-6xl md:text-7xl mb-4 animate-bounce-subtle">💬</div>
-                            <p className="text-lg md:text-xl font-semibold text-gray-300 mb-2">No messages yet</p>
-                            <p className="text-sm text-gray-500">Start the conversation!</p>
+                            <p className="text-lg md:text-xl font-semibold text-slate-300 mb-2">No messages yet</p>
+                            <p className="text-sm text-slate-500">Start the conversation!</p>
                         </div>
                     </div>
                 ) : (
@@ -241,11 +241,11 @@ const ChatWindow: React.FC = () => {
                         ))}
                         {/* Only show typing indicator if someone is typing in THIS chat */}
                         {isTypingInThisChat && (
-                            <div className="flex items-center space-x-3 text-gray-400 ml-12 mb-4 animate-fade-in">
+                            <div className="flex items-center space-x-3 text-slate-400 ml-12 mb-4 animate-fade-in">
                                 <div className="flex space-x-1">
-                                    <div className="w-2.5 h-2.5 bg-primary-400 rounded-full typing-dot"></div>
-                                    <div className="w-2.5 h-2.5 bg-primary-400 rounded-full typing-dot"></div>
-                                    <div className="w-2.5 h-2.5 bg-primary-400 rounded-full typing-dot"></div>
+                                    <div className="w-2.5 h-2.5 bg-blue-400 rounded-full typing-dot"></div>
+                                    <div className="w-2.5 h-2.5 bg-blue-400 rounded-full typing-dot"></div>
+                                    <div className="w-2.5 h-2.5 bg-blue-400 rounded-full typing-dot"></div>
                                 </div>
                                 <span className="text-sm italic">typing...</span>
                             </div>
@@ -257,7 +257,7 @@ const ChatWindow: React.FC = () => {
 
             {/* Image Preview */}
             {imagePreview && (
-                <div className="glass-dark border-t border-white/10 p-3">
+                <div className="glass-dark border-t border-slate-700/30 p-3">
                     <div className="relative inline-block">
                         <img
                             src={imagePreview}
@@ -275,7 +275,7 @@ const ChatWindow: React.FC = () => {
             )}
 
             {/* Input Area */}
-            <div className="glass-dark border-t border-white/10 p-3 md:p-4 shadow-2xl">
+            <div className="glass-dark border-t border-slate-700/30 p-3 md:p-4 shadow-2xl">
                 <form onSubmit={sendMessage} className="flex items-center space-x-2 md:space-x-3">
                     {/* Image Upload Button */}
                     <input
@@ -288,7 +288,7 @@ const ChatWindow: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-2 md:p-2.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-primary-400"
+                        className="p-2 md:p-2.5 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-blue-400"
                         title="Upload image"
                     >
                         <ImageIcon size={20} />

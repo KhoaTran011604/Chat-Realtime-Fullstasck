@@ -36,15 +36,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     <div className="flex flex-col">
                         {/* Sender name for received messages */}
                         {!isSender && (
-                            <p className="text-xs text-gray-400 mb-1 px-2">{message.sender.name}</p>
+                            <p className="text-xs text-slate-400 mb-1 px-2">{message.sender.name}</p>
                         )}
 
                         {/* Message bubble */}
                         <div className={`
               px-4 py-3 rounded-2xl shadow-lg
               ${isSender
-                                ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-br-sm'
-                                : 'bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-bl-sm'
+                                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-br-sm shadow-blue-500/30'
+                                : 'bg-slate-800/60 backdrop-blur-sm text-white border border-slate-700/30 rounded-bl-sm'
                             }
             `}>
                             {/* Image */}
@@ -68,7 +68,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                         </div>
 
                         {/* Timestamp */}
-                        <p className={`text-xs mt-1 px-2 ${isSender ? 'text-right text-gray-400' : 'text-left text-gray-500'}`}>
+                        <p className={`text-xs mt-1 px-2 ${isSender ? 'text-right text-slate-400' : 'text-left text-slate-500'}`}>
                             {formatTime(message.createdAt)}
                         </p>
                     </div>

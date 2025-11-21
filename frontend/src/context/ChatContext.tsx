@@ -12,6 +12,9 @@ interface ChatContextType {
     setNotifications: (notifications: Notification[]) => void;
     addNotification: (notification: Notification) => void;
     removeNotification: (notification: Notification) => void;
+    updateChatLatestMessage: (chatId: string, message: Message) => void;
+    incrementUnreadCount: (chatId: string) => void;
+    clearUnreadCount: (chatId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -52,6 +55,36 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
     };
 
+    const updateChatLatestMessage = (chatId: string, message: Message) => {
+        setChats((prevChats) =>
+            prevChats.map((chat) =>
+                chat._id === chatId
+                    ? { ...chat, latestMessage: message }
+                    : chat
+            )
+        );
+    };
+
+    const incrementUnreadCount = (chatId: string) => {
+        setChats((prevChats) =>
+            prevChats.map((chat) =>
+                chat._id === chatId
+                    ? { ...chat, unreadCount: (chat.unreadCount || 0) + 1 }
+                    : chat
+            )
+        );
+    };
+
+    const clearUnreadCount = (chatId: string) => {
+        setChats((prevChats) =>
+            prevChats.map((chat) =>
+                chat._id === chatId
+                    ? { ...chat, unreadCount: 0 }
+                    : chat
+            )
+        );
+    };
+
     return (
         <ChatContext.Provider
             value={{
@@ -65,6 +98,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setNotifications,
                 addNotification,
                 removeNotification,
+                updateChatLatestMessage,
+                incrementUnreadCount,
+                clearUnreadCount,
             }}
         >
             {children}

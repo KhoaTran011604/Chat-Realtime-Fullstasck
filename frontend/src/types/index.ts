@@ -15,6 +15,7 @@ export interface Chat {
     groupAdmin?: User;
     createdAt: string;
     updatedAt: string;
+    unreadCount?: number;
 }
 
 export interface Message {

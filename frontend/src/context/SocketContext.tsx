@@ -27,28 +27,28 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
     const [typingChatId, setTypingChatId] = useState<string | null>(null);
     const { user } = useAuth();
-    const { addNotification } = useChat();
+    const { addNotification, updateChatLatestMessage, incrementUnreadCount, selectedChat } = useChat();
 
     useEffect(() => {
         if (user) {
-            const newSocket = initSocket();
+            console.log('🔌 Initializing socket for user:', user.name);
+            const newSocket = initSocket(user._id);
             setSocket(newSocket);
 
-            // Setup connection
-            newSocket.emit('setup', user);
-
-            newSocket.on('connected', () => {
-                console.log('✅ Connected to socket');
+            // Listen for online users
+            newSocket.on('online-users', (users: string[]) => {
+                console.log('👥 Online users:', users);
+                setOnlineUsers(new Set(users));
             });
 
-            // Handle user online status
+            // Listen for user online/offline
             newSocket.on('user-online', (userId: string) => {
-                console.log('🟢 User online:', userId);
-                setOnlineUsers((prev) => new Set(prev).add(userId));
+                console.log('✅ User came online:', userId);
+                setOnlineUsers((prev) => new Set([...prev, userId]));
             });
 
             newSocket.on('user-offline', (userId: string) => {
-                console.log('⚫ User offline:', userId);
+                console.log('❌ User went offline:', userId);
                 setOnlineUsers((prev) => {
                     const newSet = new Set(prev);
                     newSet.delete(userId);
@@ -56,11 +56,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 });
             });
 
-            // Handle incoming messages
             newSocket.on('message-received', (newMessage: Message) => {
                 console.log('📨 Message received:', newMessage);
-                // Don't auto-add to messages here - let ChatWindow handle it
-                // This prevents messages from showing in wrong chats
+                // Update latest message in chat list for realtime preview
+                updateChatLatestMessage(newMessage.chat._id, newMessage);
+
+                // Increment unread count if chat is not currently selected
+                if (!selectedChat || selectedChat._id !== newMessage.chat._id) {
+                    incrementUnreadCount(newMessage.chat._id);
+                }
             });
 
             // Handle notifications

@@ -50,6 +50,19 @@ export const userAPI = {
         api.get(`/users/search?search=${search}`),
     getProfile: () =>
         api.get('/users/profile'),
+    updateProfile: (name: string, email: string, avatar?: File) => {
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('email', email);
+        if (avatar) {
+            formData.append('avatar', avatar);
+        }
+        return api.put('/users/profile', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
 };
 
 // Chat endpoints
