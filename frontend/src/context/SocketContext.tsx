@@ -9,8 +9,7 @@ import toast from 'react-hot-toast';
 interface SocketContextType {
     socket: Socket | null;
     onlineUsers: Set<string>;
-    typing: boolean;
-    setTyping: (typing: boolean) => void;
+    typingChatId: string | null;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -26,9 +25,9 @@ export const useSocket = () => {
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
-    const [typing, setTyping] = useState(false);
+    const [typingChatId, setTypingChatId] = useState<string | null>(null);
     const { user } = useAuth();
-    const { setMessages, addNotification } = useChat();
+    const { addNotification } = useChat();
 
     useEffect(() => {
         if (user) {
@@ -60,13 +59,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // Handle incoming messages
             newSocket.on('message-received', (newMessage: Message) => {
                 console.log('📨 Message received:', newMessage);
-
-                // Add to messages state (avoid duplicates)
-                setMessages((prevMessages: Message[]) => {
-                    const exists = prevMessages.some(m => m._id === newMessage._id);
-                    if (exists) return prevMessages;
-                    return [...prevMessages, newMessage];
-                });
+                // Don't auto-add to messages here - let ChatWindow handle it
+                // This prevents messages from showing in wrong chats
             });
 
             // Handle notifications
@@ -76,15 +70,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 toast.success(`New message from ${notification.message.sender.name}`);
             });
 
-            // Handle typing
-            newSocket.on('typing', () => {
-                console.log('⌨️ Someone is typing...');
-                setTyping(true);
+            // Handle typing - now with chatId
+            newSocket.on('typing', (chatId: string) => {
+                console.log('⌨️ Someone is typing in chat:', chatId);
+                setTypingChatId(chatId);
             });
 
-            newSocket.on('stop-typing', () => {
-                console.log('⌨️ Stopped typing');
-                setTyping(false);
+            newSocket.on('stop-typing', (chatId: string) => {
+                console.log('⌨️ Stopped typing in chat:', chatId);
+                setTypingChatId(null);
             });
 
             return () => {
@@ -102,7 +96,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, [socket]);
 
     return (
-        <SocketContext.Provider value={{ socket, onlineUsers, typing, setTyping }}>
+        <SocketContext.Provider value={{ socket, onlineUsers, typingChatId }}>
             {children}
         </SocketContext.Provider>
     );

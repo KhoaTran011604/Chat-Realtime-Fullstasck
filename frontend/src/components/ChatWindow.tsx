@@ -10,7 +10,7 @@ import { ArrowLeft, Send, Image as ImageIcon, X } from 'lucide-react';
 const ChatWindow: React.FC = () => {
     const { user } = useAuth();
     const { selectedChat, setSelectedChat, messages, setMessages, notifications, setNotifications } = useChat();
-    const { socket, typing } = useSocket();
+    const { socket, typingChatId } = useSocket();
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
@@ -18,8 +18,11 @@ const ChatWindow: React.FC = () => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Check if someone is typing in THIS chat
+    const isTypingInThisChat = typingChatId === selectedChat?._id;
 
     useEffect(() => {
         if (selectedChat) {
@@ -28,6 +31,26 @@ const ChatWindow: React.FC = () => {
             // Join the chat room
             if (socket) {
                 socket.emit('join-chat', selectedChat._id);
+
+                // Listen for new messages in THIS chat only
+                const handleNewMessage = (newMessage: any) => {
+                    console.log('📨 Message received in ChatWindow:', newMessage);
+                    // Only add if message belongs to current chat
+                    if (newMessage.chat._id === selectedChat._id) {
+                        setMessages((prev) => {
+                            const exists = prev.some(m => m._id === newMessage._id);
+                            if (exists) return prev;
+                            return [...prev, newMessage];
+                        });
+                    }
+                };
+
+                socket.on('message-received', handleNewMessage);
+
+                // Cleanup listener when chat changes
+                return () => {
+                    socket.off('message-received', handleNewMessage);
+                };
             }
 
             // Clear notifications for this chat
@@ -216,7 +239,8 @@ const ChatWindow: React.FC = () => {
                         {messages.map((message) => (
                             <MessageBubble key={message._id} message={message} />
                         ))}
-                        {typing && (
+                        {/* Only show typing indicator if someone is typing in THIS chat */}
+                        {isTypingInThisChat && (
                             <div className="flex items-center space-x-3 text-gray-400 ml-12 mb-4 animate-fade-in">
                                 <div className="flex space-x-1">
                                     <div className="w-2.5 h-2.5 bg-primary-400 rounded-full typing-dot"></div>
