@@ -23,6 +23,7 @@ export interface Message {
     content: string;
     chat: Chat | string;
     readBy: string[];
+    imageUrl?: string;
     createdAt: string;
     updatedAt: string;
 }

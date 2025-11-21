@@ -5,6 +5,8 @@ export interface IMessage extends Document {
     content: string;
     chat: mongoose.Types.ObjectId;
     readBy: mongoose.Types.ObjectId[];
+    imageUrl?: string;
+    imagePublicId?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -19,12 +21,20 @@ const messageSchema = new Schema<IMessage>(
         content: {
             type: String,
             trim: true,
-            required: true,
+            required: false, // Not required if image is sent
         },
         chat: {
             type: Schema.Types.ObjectId,
             ref: 'Chat',
             required: true,
+        },
+        imageUrl: {
+            type: String,
+            required: false,
+        },
+        imagePublicId: {
+            type: String,
+            required: false,
         },
         readBy: [
             {

@@ -70,10 +70,20 @@ export const chatAPI = {
 
 // Message endpoints
 export const messageAPI = {
-    sendMessage: (content: string, chatId: string) =>
-        api.post('/messages', { content, chatId }),
-    getMessages: (chatId: string) =>
-        api.get(`/messages/${chatId}`),
+    sendMessage: (content: string, chatId: string, image?: File) => {
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('chatId', chatId);
+        if (image) {
+            formData.append('image', image);
+        }
+        return api.post('/messages', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
+    getMessages: (chatId: string) => api.get(`/messages/${chatId}`),
 };
 
 export default api;

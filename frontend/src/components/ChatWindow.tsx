@@ -5,6 +5,7 @@ import { useSocket } from '../context/SocketContext';
 import { messageAPI } from '../services/api';
 import MessageBubble from './MessageBubble';
 import toast from 'react-hot-toast';
+import { ArrowLeft, Send, Image as ImageIcon, X } from 'lucide-react';
 
 const ChatWindow: React.FC = () => {
     const { user } = useAuth();
@@ -13,8 +14,12 @@ const ChatWindow: React.FC = () => {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (selectedChat) {
@@ -53,16 +58,58 @@ const ChatWindow: React.FC = () => {
         }
     };
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select an image file');
+                return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size must be less than 5MB');
+                return;
+            }
+
+            setSelectedImage(file);
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const clearImage = () => {
+        setSelectedImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!newMessage.trim() || !selectedChat || !socket) return;
+        if ((!newMessage.trim() && !selectedImage) || !selectedChat || !socket) return;
 
         const messageContent = newMessage;
-        setNewMessage(''); // Clear input immediately
+        const imageFile = selectedImage;
+
+        setNewMessage('');
+        clearImage();
+        setSending(true);
 
         try {
-            const { data } = await messageAPI.sendMessage(messageContent, selectedChat._id);
+            const { data } = await messageAPI.sendMessage(
+                messageContent,
+                selectedChat._id,
+                imageFile || undefined
+            );
 
             console.log('📤 Sending message:', data);
 
@@ -76,7 +123,12 @@ const ChatWindow: React.FC = () => {
         } catch (error) {
             toast.error('Failed to send message');
             console.error(error);
-            setNewMessage(messageContent); // Restore message on error
+            setNewMessage(messageContent);
+            if (imageFile) {
+                setSelectedImage(imageFile);
+            }
+        } finally {
+            setSending(false);
         }
     };
 
@@ -114,15 +166,15 @@ const ChatWindow: React.FC = () => {
 
     return (
         <div className="flex-1 flex flex-col h-full">
-            {/* Chat Header - Centered on mobile, left on desktop */}
+            {/* Chat Header */}
             <div className="glass-dark border-b border-white/10 p-4 shadow-lg">
                 <div className="flex items-center justify-center md:justify-start relative">
-                    {/* Back button for mobile - absolute left */}
+                    {/* Back button for mobile */}
                     <button
                         onClick={() => setSelectedChat(null)}
-                        className="md:hidden absolute left-0 p-2 hover:bg-white/10 rounded-lg transition-colors text-xl"
+                        className="md:hidden absolute left-0 p-2 hover:bg-white/10 rounded-lg transition-colors"
                     >
-                        ←
+                        <ArrowLeft size={20} />
                     </button>
 
                     {/* Avatar and Name */}
@@ -147,10 +199,7 @@ const ChatWindow: React.FC = () => {
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
                         <div className="text-center">
-                            <svg className="animate-spin h-12 w-12 text-primary-500 mx-auto mb-4" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
+                            <div className="animate-spin h-12 w-12 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
                             <p className="text-gray-400 text-sm">Loading messages...</p>
                         </div>
                     </div>
@@ -182,26 +231,72 @@ const ChatWindow: React.FC = () => {
                 )}
             </div>
 
+            {/* Image Preview */}
+            {imagePreview && (
+                <div className="glass-dark border-t border-white/10 p-3">
+                    <div className="relative inline-block">
+                        <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="h-20 w-20 object-cover rounded-lg"
+                        />
+                        <button
+                            onClick={clearImage}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Input Area */}
             <div className="glass-dark border-t border-white/10 p-3 md:p-4 shadow-2xl">
                 <form onSubmit={sendMessage} className="flex items-center space-x-2 md:space-x-3">
+                    {/* Image Upload Button */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-2 md:p-2.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-primary-400"
+                        title="Upload image"
+                    >
+                        <ImageIcon size={20} />
+                    </button>
+
+                    {/* Text Input */}
                     <input
                         type="text"
                         value={newMessage}
                         onChange={handleTyping}
                         placeholder="Type a message..."
                         className="input-primary flex-1 text-sm md:text-base"
+                        disabled={sending}
                     />
+
+                    {/* Send Button */}
                     <button
                         type="submit"
-                        disabled={!newMessage.trim()}
-                        className="btn-primary px-4 md:px-8 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        disabled={(!newMessage.trim() && !selectedImage) || sending}
+                        className="btn-primary px-4 md:px-6 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center space-x-2"
                     >
-                        <span className="hidden md:flex items-center space-x-2">
-                            <span>Send</span>
-                            <span>📤</span>
-                        </span>
-                        <span className="md:hidden">📤</span>
+                        {sending ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                <span className="hidden md:inline">Sending...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="hidden md:inline">Send</span>
+                                <Send size={18} />
+                            </>
+                        )}
                     </button>
                 </form>
             </div>

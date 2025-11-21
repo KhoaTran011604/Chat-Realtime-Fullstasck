@@ -10,17 +10,29 @@ import { AuthRequest } from '../middleware/authMiddleware';
 export const sendMessage = async (req: AuthRequest, res: Response) => {
     try {
         const { content, chatId } = req.body;
+        const file = req.file;
 
-        if (!content || !chatId) {
+        // Must have either content or image
+        if ((!content && !file) || !chatId) {
             res.status(400).json({ message: 'Invalid data passed into request' });
             return;
         }
 
-        const newMessage = {
+        const newMessage: any = {
             sender: req.user?._id,
-            content: content,
             chat: chatId,
         };
+
+        // Add content if provided
+        if (content) {
+            newMessage.content = content;
+        }
+
+        // Add image if uploaded
+        if (file) {
+            newMessage.imageUrl = (file as any).path; // Cloudinary URL
+            newMessage.imagePublicId = (file as any).filename; // Cloudinary public ID
+        }
 
         let message = await Message.create(newMessage);
 
